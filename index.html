@@ -57,49 +57,69 @@
   </div>
 
   <script>
-    // 🔧 REPLACE THIS with your Google Sheet ID
-    // ✅ Google Sheets published CSV (shared for everyone)
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_fAFCMXn5bWHK08QTd8RL4_6un5del72elCEajuBGzwEndiHp6t0X9dbcbwHDd9SQz4e4zbITRV9/pub?output=csv";
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_fAFCMXn5bWHK08QTd8RL4_6un5del72elCEajuBGzwEndiHp6t0X9dbcbwHDd9SQz4e4zbITRV9/pub?output=csv";
 
-    fetch(CSV_URL)
-      .then(res => res.text())
-      .then(csv => {
-        const rows = csv.split("\n").slice(1);
-        const container = document.getElementById('changelog');
+  fetch(CSV_URL)
+    .then(res => res.text())
+    .then(csv => {
+      const rows = parseCSV(csv).slice(1);
+      const container = document.getElementById("changelog");
+      container.innerHTML = "";
 
-        rows.reverse().forEach(row => {
-          const [version, date, notes] = row
-            .split(',')
-            .map(v => v.replace(/^"|"$/g, ''));
+      rows.reverse().forEach(cols => {
+        const [version, date, notes] = cols;
+        if (!version) return;
 
-          if (!version) return;
-
-          const div = document.createElement('div');
-          div.className = 'entry';
-          div.innerHTML = `
-            <div class="version">${version}</div>
-            <div class="date">${date}</div>
-            <div class="notes">${notes?.replace(/\\n/g, '<br>')}</div>
-          `;
-          container.appendChild(div);
-        });
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `
+          <div class="version">${version}</div>
+          <div class="date">${date}</div>
+          <div class="notes">${(notes || "").replace(/\\n/g, "<br>")}</div>
+        `;
+        container.appendChild(div);
       });
-        const container = document.getElementById('changelog');
+    });
 
-        rows.reverse().forEach(row => {
-          const [version, date, notes] = row.split(',').map(v => v.replace(/^"|"$/g, ''));
-          if (!version) return;
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let value = "";
+    let inQuotes = false;
 
-          const div = document.createElement('div');
-          div.className = 'entry';
-          div.innerHTML = `
-            <div class="version">${version}</div>
-            <div class="date">${date}</div>
-            <div class="notes">${notes.replace(/\\n/g, '\n')}</div>
-          `;
-          container.appendChild(div);
-        });
-      });
-  </script>
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const next = text[i + 1];
+
+      if (char === '"' && next === '"') {
+        value += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        row.push(value);
+        value = "";
+      } else if ((char === "\n" || char === "\r") && !inQuotes) {
+        if (value || row.length) {
+          row.push(value);
+          rows.push(row);
+          row = [];
+          value = "";
+        }
+      } else {
+        value += char;
+      }
+    }
+
+    if (value || row.length) {
+      row.push(value);
+      rows.push(row);
+    }
+
+    return rows;
+  }
+</script>
+
 </body>
 </html>
