@@ -58,18 +58,32 @@
 
   <script>
     // 🔧 REPLACE THIS with your Google Sheet ID
-    const SHEET_ID = "1Wny3sKdA6FVsLWrXSunmidOpBcwTqM2PyrVh7asDzso";
+    // ✅ Google Sheets published CSV (shared for everyone)
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTm_fAFCMXn5bWHK08QTd8RL4_6un5del72elCEajuBGzwEndiHp6t0X9dbcbwHDd9SQz4e4zbITRV9/pub?output=csv";
 
-    // 🔧 Sheet name (tab name)
-    const SHEET_NAME = "Darkclone's_List";
-
-    // Public CSV export URL
-    const url = `https://docs.google.com/spreadsheets/d/1Wny3sKdA6FVsLWrXSunmidOpBcwTqM2PyrVh7asDzso/edit?usp=sharing`;
-
-    fetch(url)
+    fetch(CSV_URL)
       .then(res => res.text())
       .then(csv => {
-        const rows = csv.split('\n').slice(1);
+        const rows = csv.split("\n").slice(1);
+        const container = document.getElementById('changelog');
+
+        rows.reverse().forEach(row => {
+          const [version, date, notes] = row
+            .split(',')
+            .map(v => v.replace(/^"|"$/g, ''));
+
+          if (!version) return;
+
+          const div = document.createElement('div');
+          div.className = 'entry';
+          div.innerHTML = `
+            <div class="version">${version}</div>
+            <div class="date">${date}</div>
+            <div class="notes">${notes?.replace(/\\n/g, '<br>')}</div>
+          `;
+          container.appendChild(div);
+        });
+      });
         const container = document.getElementById('changelog');
 
         rows.reverse().forEach(row => {
